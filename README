@@ -1,0 +1,74 @@
+This is the ocvm README file with instructions for installation.
+
+ocvm stands for Out-of-Core Virtual Micrscope. It emulates a suite
+of digital microscopy operations on distributed-memory clusters
+in an out-of-core manner.
+
+To build and install ocvm, you should take the following steps:
+
+ 1) configure your ssh account to log in from machine to machine 
+    without a password; if you have already done this, you can 
+    skip this step.  This can be done by typing 'ssh-keygen -t dsa', 
+    creating a key pair with no passphrase, and doing
+
+    cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+
+    If you have a security objections to this, feel free to do what
+    you think is right to get password-less logins working.
+
+ 2) resolve dependencies: java version 1.5 and above, python 2.3 
+    and above required.
+    secondly, you must have available the build tool known as scons.
+    under debian, you can simply do 'apt-get install scons'.  for other
+    systems, there may be rpms available, consult your package
+    management tools.  if all else fails, you can build it from source
+    by downloading the source code and running something like 'python
+    setup.py install --prefix=$HOME' (to install under your user
+    account).
+
+ 3) now, you're ready to build ocvm.  From the root directory, issue
+
+ $ cp config.py.sample config.py
+ $ vi config.py # or whatever editor you like
+
+ Within this configuration file, there are a number of options.  in
+ particular, you may be interested in the following:
+
+ prefix           - the installation prefix
+
+ extrarpath       - if you're installing ocvm in a non-standard location (as
+                    in, not /usr), you may want to set this variable to
+                    the 'lib' directory of your installation prefix...otherwise,
+                    you'll have to mess with LD_LIBRARY_PATH or /etc/ld.so.conf
+                    later, in order that the binaries from this package can find
+                    libocvmfilters.so when they are executed.
+
+ intrinsics	  - set to 'MMX' or 'SSE' to exploit low-level optimizations
+		    where applicable.
+
+ 4) to build and install it, you should now type 'scons' from the build
+    directory.  Assuming it successfully builds, you should now type
+    'scons install', assuming you have permission to write to the
+    installation directory (become root if necessary).
+    If you choose not to run 'scons install', the executables are placed
+    in the src directory by default.
+
+ 5) you should now make sure that the installation directory's 'bin'
+    subdirectory is in your PATH. you should now have the commands 
+    'ocvmany2dim', 'ocvmwarp' etc. in your PATH. Run 'which ocvmany2dim' 
+    to confirm this.
+
+ 6) you can now run the appropriate commands. Run the commands without 
+    any arguments or with '-h' option to show you the usage:
+
+    $ ocvmany2dim 
+    usage: ocvmany2dim
+    <input.img> <output.dim> <host_scratch>
+    OR
+    <input.ppm> <output.dim> <host_scratch>
+
+    Sample image files are placed under the src/images subdirectory.
+    Sample host_scratch files are placed under the src/hostfiles subdirectory.
+    Sample xml files for warping are placed under the src/xmls subdirectory.
+
+Questions or comments?  Contact Vijay S. Kumar at vijayskumar@gmail.com
