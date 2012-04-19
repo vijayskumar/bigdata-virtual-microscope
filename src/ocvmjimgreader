@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile
+import socket, string, random, threading, time, traceback
+
+def which(filename):
+    import os, string, stat
+    if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+        p = os.defpath
+    else:
+        p = os.environ['PATH']
+    pathlist = string.split(p, os.pathsep)
+    for path in pathlist:
+        f = os.path.join(path, filename)
+        if os.access(f, os.X_OK) and not stat.S_ISDIR(os.stat(f)[stat.ST_MODE]):
+            return f
+    return None
+
+exe = os.path.realpath(sys.argv[0])
+dir = os.path.dirname(exe)
+base = os.path.basename(dir)
+
+pre_classpath = os.getenv('CLASSPATH')
+if pre_classpath:
+    pre_classpath += os.path.pathsep
+else:
+    pre_classpath = ''
+
+# running out of build directory
+if base == 'src':
+    os.environ['CLASSPATH'] = pre_classpath + \
+        os.path.join(dir, 'ocvmjavafilters.jar')
+elif base == 'bin':
+    os.environ['CLASSPATH'] = pre_classpath + \
+        os.path.join(os.path.dirname(dir), 'lib', 'ocvmjavafilters.jar')
+
+sys.argv[0] = which('java')
+sys.argv.insert(1, 'ocvmjimgreader')
+try:
+    os.execl(sys.argv[0], *sys.argv)
+except Exception:
+    traceback.print_exc()
+    sys.exit(1)

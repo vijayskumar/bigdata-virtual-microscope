@@ -1,0 +1,36 @@
+digraph dcmpi_layout {
+  label="dcmpi layout at Mon Jun 16 19:52:59 2008";
+  subgraph cluster_0 {
+    style=filled;
+    color=lightgrey;
+    fontcolor=blue;
+    node [style=filled,color=white];
+    0 [label="F<console>_Iconsole"]
+    label="<console>";
+  }
+
+  subgraph cluster_1 {
+    style=filled;
+    color=lightgrey;
+    fontcolor=blue;
+    node [style=filled,color=white];
+    1 [label="Freader_Ireader_0"]
+    label="bm32";
+  }
+
+  subgraph cluster_2 {
+    style=filled;
+    color=lightgrey;
+    fontcolor=blue;
+    node [style=filled,color=white];
+    2 [label="Fmysqld_invoker_Iinvoker_0"]
+    3 [label="Fmysql_loader_Iload_0"]
+    label="bm49";
+  }
+
+  0 -> 3 [color=red,arrowsize=0.75,headport=s,tailport=n,fontcolor=brown,fontname=Courier,fontsize=12,headlabel="fromconsole",taillabel="tomysql_0"]
+  0 -> 2 [color=red,arrowsize=0.75,headport=s,tailport=n,fontcolor=brown,fontname=Courier,fontsize=12,headlabel="fromconsole",taillabel="tomysqld_0"]
+  1 -> 3 [color=red,arrowsize=0.75,headport=s,tailport=n,fontcolor=brown,fontname=Courier,fontsize=12,headlabel="fromreader",taillabel="tomysql_0"]
+  2 -> 0 [color=red,arrowsize=0.75,headport=s,tailport=n,fontcolor=brown,fontname=Courier,fontsize=12,headlabel="0",taillabel="toconsole"]
+  3 -> 0 [color=red,arrowsize=0.75,headport=s,tailport=n,fontcolor=brown,fontname=Courier,fontsize=12,headlabel="1",taillabel="toconsole"]
+}

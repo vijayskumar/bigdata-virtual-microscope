@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+    echo "usage: `basename $0` <common_directory> <node01> ..."
+    echo ""
+    echo "e.g. `basename $0` /tmp compute-0-0 compute-0-1"
+    exit 1
+fi
+
+T=`mktemp -d /tmp/XXXXXX`/hosts
+DIR=$1
+shift
+for host in $*; do
+    echo $host $DIR >> $T
+done
+echo $T

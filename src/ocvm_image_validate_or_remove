@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, threading, time, traceback
+
+def usage():
+    print 'usage:', os.path.basename(sys.argv[0]) + ' <file.dim> ...'
+    sys.exit(1)
+
+if ((len(sys.argv)-1) < 1):
+    usage()
+
+def which(filename):
+    if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+        p = os.defpath
+    else:
+        p = os.environ['PATH']
+    pathlist = string.split(p, os.pathsep)
+    for path in pathlist:
+        f = os.path.join(path, filename)
+        if os.access(f, os.X_OK):
+            return f
+    return None
+
+validator = which('ocvm_image_validator')
+remover = which('ocvm_image_remover')
+
+for exe in [validator, remover]:
+    if not exe:
+        sys.stderr.write("ERROR:  cannot find executable %s, is it in your PATH?" % (exe))
+        sys.exit(1)
+
+for f in sys.argv[1:]:
+    if not os.path.exists(f):
+        sys.stderr.write("ERROR: %s does not exist" % f)
+    rc = os.system('%s %s' % (validator, f))
+    if rc != 0:
+        print 'removing', f
+        rc = os.system('%s %s' % (remover, f))
+        assert(rc == 0)

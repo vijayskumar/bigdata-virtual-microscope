@@ -1,0 +1,19 @@
+type BGRplanar
+pixels_x 1446
+pixels_y 1352
+pixels_z 1
+chunks_x 3
+chunks_y 3
+chunks_z 1
+chunk_dimensions_x 482 482 482
+chunk_dimensions_y 450 450 452
+part 0 0 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 0
+part 0 1 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 1952100
+part 0 2 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 3904200
+part 1 0 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 650700
+part 1 1 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 2602800
+part 1 2 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 4557792
+part 2 0 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 1301400
+part 2 1 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 3253500
+part 2 2 0 bm40 /scratch/vijayskumar/ocvm/20070118124831.123447/5 5211384
+timestamp Thu Jan 18 12:48:31 2007

@@ -1,0 +1,103 @@
+To build and install ocvm using upak on BMI's dc cluster, you should
+take the following steps, after logging in to a node (say dc01):
+
+ 1) download and install the latest stable release of the upak package
+    manager from the web site:
+
+    http://bmi.osu.edu/~rutt/upak.html
+
+    How to install upak will not be repeated here in full, but in
+    general you should be able to type 'upak' with no arguments to get
+    the usage help before proceeding.  For a quick start with upak:
+
+         i) unpack the tarball from the root of your home directory,
+
+	ii) run the command 'upak' with no arguments (it will probably
+	    install its own version of Python as a result before
+	    returning the prompt to you)
+
+       iii) add the line sourcing the (init.sh,init.csh) file like it
+            tells you do to so to your shell startup files
+
+        iv) log out and log back in
+
+ 2) import upak sources by downloading/acquiring the file ocvm.ups (it
+    is available from http://bmi.osu.edu/~rutt/resources/ocvm.ups) and
+    then running the command 'upak import ocvm.ups'.  Done as all one
+    line, it would look like:
+
+    wget http://bmi.osu.edu/~rutt/resources/ocvm.ups; upak import ocvm.ups
+
+ 3) update upak's view of installable packages by running the command
+    'upak update'
+
+ 4) run the command 'upak add-external java /parallel/jdk1.5.0_04-linux-ia32'
+
+    and add a statement in your shell startup file sourcing one of
+
+        . /parallel/jdk1.5.0_04-linux-ia32/sourceme.sh       # for bourne shells
+
+        source /parallel/jdk1.5.0_04-linux-ia32/sourceme.csh # for C shells
+
+ 5) run the command 'upak add-external mpi /parallel/mpich-1.2.6'
+
+    and add a statement in your shell startup file sourcing one of
+
+        . /parallel/mpich-1.2.6/sourceme.sh       # for bourne shells
+
+        source /parallel/mpich-1.2.6/sourceme.csh # for C shells
+
+ 6) re-source your shell init files (possibly by logging out and back
+    in) to pick up Java and MPI
+
+ 7) run the command 'upak install bmi-ocvm-stable' to install ocvm (it
+    will satisfy dependencies first such as bmi-dcmpi, scons, a
+    version of python, etc...when asked which dcmpi package to use,
+    I'd choose the stable one).
+
+ 8) configure dcmpi using the command 'dcmpiconfig' which should be in
+    your PATH by now.  Choose option 1 to configure MPI run command,
+    then choose 1 for mpich.
+
+ 9) configure your ssh account within our cluster to log in from
+    machine to machine without a password; if you have already done
+    this, you can skip this step.  This can be done by typing
+    'ssh-keygen -t dsa', creating a key pair with no passphrase, and
+    doing
+
+    cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+
+    If you have a security objections to this, feel free to do what
+    you think is right to get password-less logins working.
+
+10) you should now have the commands 'ocvmstitch' etc. in your PATH.
+    Run 'which ocvmstitch' to confirm this.
+
+11) you can now stitch some data in .IMG files by doing something like
+    the following:
+
+         # prepare host/scratch file, which contains hosts to
+         # participate in the parallel app (I suggest using dc01-dc05)
+         # and their output directories, one pair per line (the
+         # output directory will be created later if it doesn't exist yet)
+      
+      i) cp /parallel/data/IMG/hostscratch-rutt.dc01-dc05 ~/hostscratch-$LOGNAME.dc01-dc05
+         vi ~/hostscratch-$LOGNAME.dc01-dc05 # customize to your liking
+
+         # run the stitching component
+
+     ii) ocvmstitch -o ~/3by3.dim R /parallel/data/IMG/PAPER3BY3.IMG ~/hostscratch-$LOGNAME.dc01-dc05
+
+         # if all went well, you can verify that the .dim file
+	 # exists...should print out that it succeeded
+
+    iii) ocvm_image_validator ~/3by3.dim && echo succeeded
+
+         # you can run the gui to look at the image
+	 
+     iv) ocvmd &
+         ocvmgui ~/3by3.dim
+	 killall ocvmd
+
+Questions or comments?  Contact Benjamin Rutt at 614-688-5431 or
+rutt@bmi.osu.edu.

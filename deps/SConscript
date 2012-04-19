@@ -1,0 +1,14 @@
+import os.path
+
+Import("env")
+prefix = env['install_prefix']
+
+installed_libdir = os.path.join(prefix, "lib")
+env.Alias("install",
+          env.Install(installed_libdir,
+                      ['ij.jar',
+                       'jade_1_0.jar',
+                       'jai_codec.jar',
+                       'jai_core.jar',
+                       'mlibwrapper_jai.jar',
+                       'ncmir_plugins.jar']))

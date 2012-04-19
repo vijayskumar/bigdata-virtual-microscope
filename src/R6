@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+set -x
+for f in PAPER3BY3.IMG PAPER10BY10.IMG 080205B.IMG 080305A.IMG 081005A.IMG IGRID4-8-05.IMG IGRIDCS3.IMG TJDKIDNEY2.IMG; do
+    scp 140.254.80.15:/data/BIRN_IMG/$f .;
+    ocvmimg2ppm $f ~/dev/ocvm/ocvm-cvs/src/hostfiles/hs.osumed-4
+    rm -f $f $f.ppm;
+done

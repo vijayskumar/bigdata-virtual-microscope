@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, time, traceback, shutil
+
+def usage():
+    s = 'usage:' + os.path.basename(sys.argv[0]) + ' <input.ppm> <output.ppm> <host_scratch> <control_points.xml>\n'
+    sys.stderr.write(s)
+    sys.exit(1)
+
+if ((len(sys.argv)-1) != 4):
+    usage()
+
+def mkdtempold():
+    import random, os, os.path
+    dir = '/tmp/mkdtempold.'
+    n = 0
+    while n < 100000:
+        val = `random.randint(0, 1000000)`
+        file = dir + val
+        try:
+            os.mkdir(file, 0700)
+            return file
+        except OSError, e:
+            import errno
+            if e.errno == errno.EEXIST:
+                continue # try again
+            raise
+        n += 1
+    raise RuntimeError, 'ERROR: could not find temporary filename'
+    
+def runcmd(cmd, noop=False):
+    if noop:
+        print cmd
+        return
+    print '+%s' % (cmd)
+    rc = os.system(cmd)
+    if rc != 0:
+        sys.stderr.write("ERROR: running cmd %s returned %d from %s\n" % \
+                         (cmd, rc, sys.argv[0]))
+        sys.exit(1)
+
+def remover(dimfiles):
+    for dimfile in dimfiles:
+        if os.access(dimfile,os.F_OK):
+            print 'removing file', dimfile
+            os.system('ocvm_image_remover -q %s' % (dimfile))
+
+input = sys.argv[1]
+output = sys.argv[2]
+hs = sys.argv[3]
+xmlfile = sys.argv[4]
+
+td = mkdtempold()
+dimtmp1 = os.path.join(td, 'declustered.dim')
+dimtmp2 = os.path.join(td, 'warped.dim')
+
+before = time.time()
+runcmd('ocvmany2dim %s %s %s' % (input, dimtmp1, hs))
+runcmd('ocvmwarp3 --nchunkwise 2 --readahead 1 %s %s %s' % (xmlfile, dimtmp1, dimtmp2))
+remover([dimtmp1])
+runcmd('ocvm_dim2single %s %s' % (dimtmp2, output))
+remover([dimtmp2])
+print 'created', output, 'total elapsed time', time.time() - before, 'seconds'

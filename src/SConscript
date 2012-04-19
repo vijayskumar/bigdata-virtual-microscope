@@ -1,0 +1,130 @@
+import os.path
+import commands
+
+Import("env")
+
+prefix = env['install_prefix']
+installed_libdir = os.path.join(prefix, "lib")
+installed_bindir = os.path.join(prefix, "bin")
+
+libocvmfilters = env.SharedLibrary('ocvmfilters',
+                                   ['ocvmcommon.cpp',
+                                    'ocvm_warpfunction.cpp',
+                                    'f-reader.cpp',
+                                    'f-thresholder.cpp',
+                                    'f-tessellator.cpp',
+                                    'f-prefixsum.cpp',
+                                    'f-fetchmerger.cpp',
+                                    'f-validator.cpp',
+                                    'f-remover.cpp',
+                                    'f-provide.cpp',
+                                    'f-mediator.cpp',
+                                    'f-cxx_aligner.cpp',
+                                    'f-stitchreader.cpp',
+                                    'f-stitchwriter.cpp',
+                                    'f-mst.cpp',
+                                    'f-imgpartitioner.cpp',
+                                    'f-dimwriter.cpp',
+                                    'f-zprojector.cpp',
+                                    'f-combinepaster.cpp',
+                                    'f-cxx_normalizer.cpp',
+                                    'f-warper.cpp',
+                                    'f-warpmapper.cpp',
+                                    'f-warpwriter.cpp',
+                                    'f-ppmpartitioner.cpp',
+                                    'f-ppmtiler.cpp',
+                                    'f-scaler.cpp',
+                                    'f-dim2single.cpp',
+                                    'f-sha1summer.cpp'])
+
+ocvm_prefix_sum = env.Program('ocvm_prefix_sum',
+                              ['ocvm_prefix_sum.cpp','ocvmcommon.cpp',
+                               'ocvmprefixsumlib.cpp'])
+ocvmd = env.Program('ocvmd', ['ocvmd.cpp','ocvmcommon.cpp',
+                               'ocvmprefixsumlib.cpp',
+                               'ocvmquerylib.cpp'])
+ocvmq = env.Program('ocvmq', ['ocvmq.cpp','ocvmcommon.cpp','ocvmquerylib.cpp'])
+ocvm_image_maker = env.Program('ocvm_image_maker', ['ocvm_image_maker.cpp'])
+ocvm_file_maker = env.Program('ocvm_file_maker', ['ocvm_file_maker.cpp'])
+ocvm_image_remover = env.Program('ocvm_image_remover', ['ocvm_image_remover.cpp','ocvmcommon.cpp'])
+ocvm_image_validator = env.Program('ocvm_image_validator', ['ocvm_image_validator.cpp','ocvmcommon.cpp'])
+
+env.Program('PastedImage.cpp') # test program
+env.Program('permuter.cpp') # test program
+env.Program('hashtest',['hashtest.cpp','ocvmcommon.cpp']) # test program
+
+env.Program('mediator_test', ['mediator_test.cpp','ocvmcommon.cpp'])
+
+ocvmautoalign_bin = env.Program('ocvmautoalign.bin', ['ocvmautoalign.cpp','ocvmcommon.cpp'])
+ocvmpaster = env.Program('ocvmpaster', ['ocvmpaster.cpp','ocvmcommon.cpp'])
+ocvmstitch_bin = env.Program('ocvmstitch.bin', ['ocvmstitch.cpp','ocvmcommon.cpp'])
+ocvmimgread = env.Program('ocvmimgread', ['ocvmimgread.cpp','ocvmcommon.cpp'])
+imgfile_scaler = env.Program('imgfile_scaler', ['imgfile_scaler.cpp','ocvmcommon.cpp'])
+ocvmdimscaler = env.Program('ocvmdimscaler', ['ocvmdimscaler.cpp','ocvmcommon.cpp'])
+ocvmsha1sum = env.Program('ocvmsha1sum', ['ocvmsha1sum.cpp','ocvmcommon.cpp'])
+ocvm_img2dim = env.Program('ocvmany2dim', ['ocvmany2dim.cpp','ocvmcommon.cpp'])
+# ocvm_dim2single = env.Program('ocvm_dim2single', ['ocvm_dim2single.cpp','ocvmcommon.cpp'])
+ocvmzproject = env.Program('ocvmzproject', ['ocvmzproject.cpp','ocvmcommon.cpp'])
+ocvmnormalize_bin = env.Program('ocvmnormalize.bin', ['ocvmnormalize.cpp', 'ocvmcommon.cpp'])
+# ocvmwarp_bin = env.Program('ocvmwarp.bin', ['ocvmwarp.cpp', 'ocvmcommon.cpp', 'ocvm_warpfunction.cpp'])
+ocvmwarp2 = env.Program('ocvmwarp2', ['ocvmwarp2.cpp','ocvmcommon.cpp','ocvm_warpfunction.cpp'])
+ocvmwarp3 = env.Program('ocvmwarp3', ['ocvmwarp3.cpp','ocvmcommon.cpp','ocvm_warpfunction.cpp'])
+
+autoalign_bin = env.Program('autoalign.bin', ['ocvmautoalign.cpp','ocvmcommon.cpp'])
+
+print env['use_java']
+if env['use_java'] == 1:
+    java_version = commands.getoutput("java -version").split()
+    assert len(java_version)>= 3
+    java_version = java_version[2]
+    java_version = java_version.replace('"','')
+    maj, min, minmin = java_version.split('.')
+    maj = int(maj)
+    min = int(min)
+    
+    if (maj == 1 and min >= 5) or maj > 1:
+        java_classes = env.Java(target='classes', source='.')
+        def makejar(target, source, env):
+            cmd = 'cd src; jar cf ocvmjavafilters.jar -C classes .'
+            rc = os.system(cmd)
+            if rc:
+                sys.stderr.write("ERROR: running command %s" % (cmd))
+                sys.exit(1)
+        jar_filters = env.Command(target='ocvmjavafilters.jar',
+                                  source='classes',
+                                  action=Action(makejar))
+        env.Alias("install",
+              env.Install(installed_libdir, [jar_filters]))
+
+env.Alias("install",
+          env.Install(installed_libdir, [libocvmfilters, jar_filters]))
+
+env.Alias("install",
+          env.Install(installed_bindir, [
+             ocvm_prefix_sum,
+             ocvmd,
+             ocvmimgread,
+             'ocvmcorrect',
+             ocvm_img2dim,
+            ocvmzproject,
+            'ocvmnormalize',
+            ocvmnormalize_bin,
+            'ocvmwarp',
+#            ocvmwarp_bin,
+            'ocvmautoalign',
+            'prenormalize_bin',
+            ocvmautoalign_bin,
+            ocvmpaster,
+#            ocvm_dim2single,
+            'ocvmimg2ppm',
+            'ocvmjimgreader',
+            'ocvmmkhostfile',
+            ocvm_image_remover,
+            ocvm_image_validator,
+            'ocvm_image_validate_or_remove',
+            'ocvmstitchmon.py',
+            'ocvmrai',
+	    'ocvmlkh',
+            'ocvmgui',
+            'ocvmgui.py',
+            'ocvmguimain.py']))

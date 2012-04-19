@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, time, traceback, shutil, atexit, signal
+
+def usage():
+    print 'usage:', os.path.basename(sys.argv[0]) + ' [-o <output.ppm>] <input.IMG> <host_scratch_file>'
+    sys.exit(1)
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "ho:", ["help", "output="])
+except getopt.GetoptError:
+    usage()
+output_file = None
+cachesize = "16m"
+for opt, arg in opts:
+    if opt in ("-h", "--help"):
+        usage()
+    elif opt in ("-o", "--output"):
+        output_file = arg
+
+if (len(args) != 2):
+    usage()
+
+def mkdtempold():
+    import random, os, os.path
+    dir = '/tmp/mkdtempold.'
+    n = 0
+    while n < 100000:
+        val = `random.randint(0, 1000000)`
+        file = dir + val
+        try:
+            os.mkdir(file, 0700)
+            return file
+        except OSError, e:
+            import errno
+            if e.errno == errno.EEXIST:
+                continue # try again
+            raise
+        n += 1
+    raise RuntimeError, 'ERROR: could not find temporary filename'
+
+def remover(dimfiles):
+    for dimfile in dimfiles:
+        if os.access(dimfile,os.F_OK):
+            print 'removing file', dimfile
+            os.system('ocvm_image_remover -q %s' % (dimfile))
+    
+def runcmd(cmd):
+    print '+%s' % (cmd)
+    rc = os.system(cmd)
+    if rc != 0:
+        sys.stderr.write("ERROR: running cmd %s returned %d from %s\n" % \
+                         (cmd, rc, sys.argv[0]))
+        sys.exit(1)
+
+input_file = args[0]
+hs_file = args[1]
+if not output_file:
+    output_file = re.sub(r'\.[iI][mM][gG]$', '.ppm', input_file)
+
+if not re.search(r'\.[iI][mM][gG]$', input_file):
+    sys.stderr.write("ERROR: %s is not an .img file!\n" % (input_file))
+    sys.exit(1)
+    
+if os.access(output_file,os.F_OK):
+    sys.stderr.write("WARNING: file %s exists, removing it\n" % (output_file))
+    os.remove(output_file)
+    
+tempdir = mkdtempold()
+corrected_dim = os.path.join(tempdir, 'corrected.dim')
+
+runcmd('ocvmcorrect -o %s %s %s' % \
+       (corrected_dim, input_file, hs_file))
+runcmd("ocvm_dim2single %s %s"% (corrected_dim, output_file))
+remover([corrected_dim])
+os.rmdir(tempdir)
+print output_file, 'created'

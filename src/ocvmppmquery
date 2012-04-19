@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, time, traceback, shutil, struct
+
+def usage():
+    s = 'usage: ' + os.path.basename(sys.argv[0]) + ' <input.ppm> <query>'
+    s += '\n\nwhere query is a valid python expression over any of r, g, b\n'
+    s += '\n'
+    s += 'e.g. ocvmppmquery 01.ppm "r <= 10 or (b > 240 and g > 244)"\n'
+    sys.stderr.write(s)
+    sys.exit(1)
+
+if ((len(sys.argv)-1) != 2):
+    usage()
+
+input = sys.argv[1]
+f = open(input, "r")
+p6, dims, max = (f.readline(), f.readline(), f.readline())
+assert p6=="P6\n"
+assert max=="255\n"
+dimx, dimy = [int(x) for x in dims.split()]
+pixels = dimx*dimy
+
+query = sys.argv[2]
+# query = query.lower()
+codeobj = compile(query, '<string>', 'eval')
+
+count = 0
+for i in range(pixels):
+    r,g,b = struct.unpack("BBB", f.read(3))
+#     print r, g, b
+    if eval(codeobj, globals(), locals()):
+        count += 1
+print 'pixels', pixels
+print 'count', count

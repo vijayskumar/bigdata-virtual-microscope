@@ -1,0 +1,60 @@
+2
+distributed_prefix_sum
+A distributed prefix sum index generator.
+ocvm_prefix_sum.wrap
+3
+imagein
+A .dim filename to index.
+y
+1
+1
+3
+imageout
+Output (indexed) .dim filename to write to.
+y
+1
+1
+3
+threshold_r
+Threshold (0-255 as a string) for red pixels.  Any pixels below this value are eliminated from the final image.
+y
+1
+1
+3
+threshold_g
+Threshold (0-255 as a string) for green pixels.  Any pixels below this value are eliminated from the final image.
+y
+1
+1
+3
+threshold_b
+Threshold (0-255 as a string) for blue pixels.  Any pixels below this value are eliminated from the final image.
+y
+1
+1
+3
+reduction_factor
+Resolution reduction factor, given as a string.  Typical value is e.g. 4.
+y
+1
+1
+4
+elapsed
+elapsed time as a string
+y
+1
+1
+4
+imagein
+The .dim filename that was indexed.
+y
+1
+1
+4
+imageout
+The built index .dim filename.
+y
+1
+1
+x
+x

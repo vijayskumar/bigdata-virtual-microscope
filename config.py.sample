@@ -1,0 +1,7 @@
+# prefix         = '/home/rutt/opt/ocvm-0.9'
+# debug          = 1
+# debug_flags    = '-ggdb3'
+# intrinsics     = 'MMX'
+# extradefines   = 
+# inhibit        = 'prefixsum'
+# use_java       = 0

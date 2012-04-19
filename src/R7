@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+if [ $# -ne 3 ]; then
+    echo "usage: `basename $0` <input.dim> <cf.xml> <cachesize>"
+    exit 1
+fi
+
+export DCMPI_STATS=1
+
+STAMP=`date '+%Y_%m_%d_%H_%M_%S'`
+echo $STAMP
+set -x
+ocvmwarp $2 $1 $1-warp1.dim 2>&1 | tee warp1.out.$STAMP
+ocvmwarp2 --cachesize $3 $2 $1 $1-warp2.dim 2>&1 | tee warp2.out.$STAMP
+ocvmwarp3 --cachesize $3 $2 $1 $1-warp3.dim 2>&1 | tee warp3.out.$STAMP
+ocvmwarp3 --rowwise --cachesize $3 $2 $1 $1-warp3r.dim 2>&1 | tee warp3r.out.$STAMP
+ocvmwarp3 --chunkwise --readahead 1 $2 $1 $1-warp3c.dim 2>&1 | tee warp3c.out.$STAMP
+ocvmwarp3 --nchunkwise 2 --readahead 1 $2 $1 $1-warp3nc.dim 2>&1 | tee warp3nc.out.$STAMP
+
+unset DCMPI_STATS
+ocvmsha1sum $1-warp1.dim
+ocvmsha1sum $1-warp2.dim
+ocvmsha1sum $1-warp3.dim
+ocvmsha1sum $1-warp3r.dim
+ocvmsha1sum $1-warp3c.dim
+ocvmsha1sum $1-warp3nc.dim

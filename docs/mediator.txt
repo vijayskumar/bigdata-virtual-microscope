@@ -1,0 +1,32 @@
+e.g.
+
+  host1       host2
+
+normalizer   normalizer
+ ^  |         |   ^frommed
+ |  |         |   |  
+ |  v         V   |2norm
+mediator---> mediator<-\
+^   |   <---m2m  |2r    |fromr
+|   |            |      |
+|   V            V      |
+| r1,r2...rn r1,r2...rn |
+|   \ | /      \ | /    |tom
+\----rout       rout----/   
+        
+        
+layout:
+1) set up mediator
+2) normalizer:  attach to mediator in on each host,
+                set up reply port of outgoing mediator
+
+runtime calls:
+
+// returns clipped BGR planar image in the DCBuffer
+DCBuffer * fetchFromMediator(ImageDescriptor & descriptor,
+                             ImageCoordinate & coordinate,
+                             string & mediator_outgoing_reply_port,
+                             int8 ul_x = -1,
+                             int8 ul_y = -1,
+                             int8 lr_x = -1,
+                             int8 lr_y = -1);

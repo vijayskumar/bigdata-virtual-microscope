@@ -1,0 +1,157 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, time, traceback, shutil, atexit, signal
+
+def usage():
+    print 'usage:', os.path.basename(sys.argv[0]) + ' [-o <output.dim>] [-n] [-g] <input.IMG> <host_scratch_file>'
+    sys.exit(1)
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "ho:ng", ["help", "output=", "noop", "gui"])
+except getopt.GetoptError:
+    usage()
+output_file = None
+noop = 0
+gui = 0
+for opt, arg in opts:
+    if opt in ("-h", "--help"):
+        usage()
+    elif opt in ("-o", "--output"):
+        output_file = arg
+    elif opt in ("-n", "--noop"):
+        noop = 1
+    elif opt in ("-g", "--gui"):
+        gui = 1
+
+if (len(args) != 2):
+    usage()
+
+def mkdtempold():
+    import random, os, os.path
+    dir = '/tmp/mkdtempold.'
+    n = 0
+    while n < 100000:
+        val = `random.randint(0, 1000000)`
+        file = dir + val
+        try:
+            os.mkdir(file, 0700)
+            return file
+        except OSError, e:
+            import errno
+            if e.errno == errno.EEXIST:
+                continue # try again
+            raise
+        n += 1
+    raise RuntimeError, 'ERROR: could not find temporary filename'
+    
+def runcmd(cmd, oprofile=False):
+    if noop:
+        print cmd
+        return
+    print '+%s' % (cmd)
+    if oprofile:
+        os.system('opstart')
+    rc = os.system(cmd)
+    if oprofile:
+        os.system('opstop')
+        os.system('opreport -l ~/dev/ocvm/ocvm-cvs/src/libocvmfilters.so')
+        os.system('opannotate --source ~/dev/ocvm/ocvm-cvs/src/libocvmfilters.so')
+    if rc != 0:
+        sys.stderr.write("ERROR: running cmd %s returned %d from %s\n" % \
+                         (cmd, rc, sys.argv[0]))
+        sys.exit(1)
+
+def remover(dimfiles):
+    for dimfile in dimfiles:
+        if os.access(dimfile,os.F_OK):
+            print 'removing file', dimfile
+            os.system('ocvm_image_remover -q %s' % (dimfile))
+        
+input_file = args[0]
+hs_file = args[1]
+if not output_file:
+    output_file = re.sub(r'\.[iI][mM][gG]$', '.dim', input_file)
+
+if not re.search(r'\.[iI][mM][gG]$', input_file):
+    sys.stderr.write("ERROR: %s is not an .img file!\n" % (input_file))
+    sys.exit(1)
+
+if not os.access(input_file,os.F_OK):
+    sys.stderr.write("ERROR: %s doesn't exist!\n" % (input_file))
+    sys.exit(1)
+
+if os.access(output_file,os.F_OK):
+    if not noop:
+        sys.stderr.write("WARNING: file %s exists, removing it\n" % (output_file))
+    cmd = 'ocvm_image_remover -q ' + output_file
+    runcmd(cmd)
+
+os.environ['DCMPI_STATS'] = '1'
+    
+tempdirname = mkdtempold()
+if not noop:
+    print 'using tempdirname of', tempdirname
+
+declustered_dim = os.path.join(tempdirname, 'declustered.dim')
+zproj_dim = os.path.join(tempdirname, 'zproj.dim')
+declustered_dim_norm = os.path.join(tempdirname, 'declustered-normalized.dim')
+zproj_dim_norm = os.path.join(tempdirname, 'zproj-normalized.dim')
+removals = [declustered_dim,zproj_dim,declustered_dim_norm,zproj_dim_norm]
+
+cmd = 'ocvmjimgreader %s' % (input_file)
+fh = os.popen(cmd, "r")
+subimage_width = None
+subimage_height = None
+subimage_overlap = None
+for line in fh.readlines():
+    if re.search("^width: ", line):
+        subimage_width = line.strip().split()[1]
+    elif re.search("^height: ", line):
+        subimage_height = line.strip().split()[1]
+    elif re.search("^dOverlap: ", line):
+        subimage_overlap = line.strip().split()[1]
+fh.close()
+if not subimage_width or not subimage_height or not subimage_overlap:
+    sys.stderr.write("ERROR: couldn't read values from %s\n" % (input_file))
+    sys.exit(1)
+
+cmd = 'ocvmany2dim %s %s %s' % (input_file, declustered_dim, hs_file)
+runcmd(cmd, oprofile=False)
+if gui:
+    runcmd('ocvmgui %s' % (declustered_dim))
+
+cmd = 'ocvmzproject %s %s' % (declustered_dim, zproj_dim)
+runcmd(cmd)
+if gui:
+    runcmd('ocvmgui %s' % (zproj_dim))
+
+cmd = 'ocvmnormalize %s %s %s %s' % \
+    (declustered_dim, zproj_dim,
+     declustered_dim_norm, zproj_dim_norm)
+runcmd(cmd)
+if gui:
+    runcmd('ocvmgui %s' % (declustered_dim_norm))
+    runcmd('ocvmgui %s' % (zproj_dim_norm))
+
+finalized_offsets_file = os.path.join(tempdirname, 'finalized_offsets')
+
+cmd = 'ocvmautoalign %s R %s %s %s %s' % (zproj_dim_norm, finalized_offsets_file, subimage_width, subimage_height, subimage_overlap)
+runcmd(cmd, oprofile=False)
+
+cmd = 'ocvmpaster %s %s %s' % (declustered_dim_norm, finalized_offsets_file, output_file)
+runcmd(cmd, oprofile=False)
+
+if gui:
+    runcmd('ocvmgui %s' % (output_file))
+
+if not noop:
+    os.remove(finalized_offsets_file)
+
+del os.environ['DCMPI_STATS']
+
+if not noop:
+    remover(removals)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    print output_file, 'created'
+    os.rmdir(tempdirname)

@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile
+import socket, string, random, threading, time, traceback
+
+names = ['ij','jade_1_0','jai_codec','jai_core','mlibwrapper_jai',
+         'ncmir_plugins']
+newpath = []
+
+def getsysmem():
+    return int(os.sysconf('SC_PHYS_PAGES')) * \
+        int(os.sysconf('SC_PAGESIZE'))
+
+exe = os.path.realpath(sys.argv[0])
+dir = os.path.dirname(exe)
+base = os.path.basename(dir)
+
+pre_filter_path = os.getenv('DCMPI_FILTER_PATH')
+if pre_filter_path:
+    pre_filter_path += os.path.pathsep
+else:
+    pre_filter_path = ''
+
+# running out of build directory
+if base == 'src':
+    for n in names:
+        d = os.path.dirname(dir)
+        newpath.append(os.path.join(d, 'deps', n + '.jar'))
+    os.environ['DCMPI_FILTER_PATH'] = pre_filter_path + base
+elif base == 'bin':
+    for n in names:
+        d = os.path.dirname(dir)
+        newpath.append(os.path.join(d, 'lib', n + '.jar'))
+    os.environ['DCMPI_FILTER_PATH'] = pre_filter_path + os.path.join(d, 'lib')
+# print newpath
+
+old_value = os.getenv('DCMPI_JAVA_CLASSPATH')
+if old_value:
+    os.environ['DCMPI_JAVA_CLASSPATH'] = os.getenv('DCMPI_JAVA_CLASSPATH') + \
+                                         ':' + string.join(newpath, ':')
+else:
+    os.environ['DCMPI_JAVA_CLASSPATH'] = string.join(newpath, ':')
+# print os.environ['DCMPI_JAVA_CLASSPATH']
+
+if os.uname()[4] == 'x86_64':
+    os.environ['DCMPI_JAVA_EXTRA_STARTUP_ARGS'] = '-Djava.awt.headless=true'
+else:
+    os.environ['DCMPI_JAVA_EXTRA_STARTUP_ARGS'] = '-Djava.awt.headless=true'
+os.environ['DCMPI_JAVA_MINIMUM_HEAP_SIZE'] = '64m'
+
+sysmem = getsysmem()
+maxsz = int(sysmem * 0.6)
+if maxsz > 2147483648:
+    maxsz = 2147483648
+os.environ['DCMPI_JAVA_MAXIMUM_HEAP_SIZE'] = '%d' % (maxsz)
+
+sys.argv[0] = os.path.join(dir, 'autoalign.bin')
+# sys.argv = ['/home/rutt/bin/gdbe'] + sys.argv
+try:
+    os.execl(sys.argv[0], *sys.argv)
+except Exception:
+    traceback.print_exc()
+    sys.exit(1)

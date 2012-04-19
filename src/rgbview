@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+import os, os.path, sys, re, commands, pickle, tempfile, getopt
+import socket, string, random, time, traceback, shutil
+
+# Tkinter
+from Tkinter import *
+import tkFileDialog
+import tkMessageBox
+
+# Pmw
+sys.path.append(os.path.dirname(sys.argv[0]))
+import Pmw
+
+# PIL
+import Image
+import ImageTk
+
+def usage():
+    print 'usage:', os.path.basename(sys.argv[0]) + \
+        ' <filename> <width> <height> [start_offset]'
+    sys.exit(1)
+
+if ((len(sys.argv)-1) < 3 or (len(sys.argv)-1) > 4):
+    usage()
+
+def quit(event):
+    sys.exit(0)
+
+filename = sys.argv[1]
+width = int(sys.argv[2])
+height = int(sys.argv[3])
+start_offset = 0
+if len(sys.argv)-1 == 4:
+    start_offset = int(sys.argv[4])
+f = open(filename,'r')
+f.seek(start_offset)
+pixels = width*height
+data = f.read(pixels*3)
+
+image_data = Image.fromstring(
+    'RGB', (width, height), data)
+f.close()
+
+root = Pmw.initialise()
+root.geometry('%dx%d' % (width, height))
+root.title('rgbview:  %s' % (filename))
+
+frametop = Frame(root)
+frametop.pack(side=TOP, fill=BOTH, expand=YES)
+
+image_canvas = Canvas(frametop)
+image_canvas.pack(side=TOP, fill=BOTH, expand=YES)
+
+image_canvas.bind("q", quit)
+frametop.bind("q", quit)
+root.bind("q", quit)
+
+photo = ImageTk.PhotoImage(image_data)
+image_canvas.create_image(0, 0, image=photo, anchor=NW)
+
+root.mainloop()

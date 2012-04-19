@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+import sys, re, os, math
+
+def usage():
+    print os.path.basename(sys.argv[0]) + ': [-r] <number>'
+    print
+    print "e.g. <number> can be 1m, 2M, 1g, 3G, 4T, 10t, etc."
+    print
+    print "-r reverses the conversion (e.g. 1024 -> 1k)"
+    sys.exit(1)
+
+# arg is a number, or a thing that looks like a number
+def csnum_to_num(arg):
+    float_regexp = "-?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"
+    re_kb = '^' + float_regexp + '[kK]$'
+    re_mb = '^' + float_regexp + '[mM]$'
+    re_gb = '^' + float_regexp + '[gG]$'
+    re_tb = '^' + float_regexp + '[tT]$'
+    re_pb = '^' + float_regexp + '[pP]$'
+    re_eb = '^' + float_regexp + '[eE]$'
+    if (re.match(re_kb, arg)):
+        return int(round(float(re.sub(re_kb, r'\1', arg)) * (2**10)))
+    elif (re.match(re_mb, arg)):
+        return int(round(float(re.sub(re_mb, r'\1', arg)) * (2**20)))
+    elif (re.match(re_gb, arg)):
+        return int(round(float(re.sub(re_gb, r'\1', arg)) * (2**30)))
+    elif (re.match(re_tb, arg)):
+        return int(round(float(re.sub(re_tb, r'\1', arg)) * (2**40)))
+    elif (re.match(re_pb, arg)):
+        return int(round(float(re.sub(re_pb, r'\1', arg)) * (2**50)))
+    elif (re.match(re_eb, arg)):
+        return int(round(float(re.sub(re_pb, r'\1', arg)) * (2**60)))
+    elif (re.match('^[0-9]+', arg)):
+        return int(arg)
+    else:
+        raise ValueError("ERROR:  invalid number " + arg)
+
+# arg is a number, or a thing that looks like a number
+# return value is a string
+def num_to_csnum(arg):
+
+    out = ''
+
+    acc = float(arg)
+    k_divs = 0
+
+    while (len(str(int(round(acc)))) > 3):
+        acc = acc / 1024
+        k_divs = k_divs + 1
+
+    out = str(round(acc, 2))
+    if (k_divs == 1):
+        return str(out) + "K"
+    elif (k_divs == 2):
+        return str(out) + "M"
+    elif (k_divs == 3):
+        return str(out) + "G"
+    elif (k_divs == 4):
+        return str(out) + "T"
+    elif (k_divs == 5):
+        return str(out) + "P"
+    elif (k_divs == 6):
+        return str(out) + "E"
+    else:
+        return str(arg)
+
+if __name__ == "__main__": # when run as a script
+    # error checking argument
+    if ((len(sys.argv) != 2) and (len(sys.argv) != 3)):
+        usage()
+    elif ((len(sys.argv) == 3) and (sys.argv[1] == "-r")):
+        print num_to_csnum(sys.argv[2])
+    elif (len(sys.argv) == 3):
+        usage()
+    else:
+        print csnum_to_num(sys.argv[1])
